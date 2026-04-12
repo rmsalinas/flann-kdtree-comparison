@@ -111,7 +111,7 @@ Improved: PERFECT accuracy across all test cases.
 
 Five accuracy-neutral improvements compound to give 1.5×–2.5× speedup for low-dimensional data:
 
-1. **Multi-point leaf nodes.** Stop splitting at `LEAF_MAX_SIZE = 10` points instead of 1. Reduces tree depth by ~log₂(10) ≈ 3.3 levels, proportionally shrinking the search path. Adaptive: for `veclen > 16` the leaf size stays 1, preserving the original behaviour for high-dimensional data where per-point distance cost dominates.
+1. **Multi-point leaf nodes.** Stop splitting at `LEAF_MAX_SIZE = 10` points instead of 1. Reduces tree depth by ~log₂(10) ≈ 3.3 levels, proportionally shrinking the search path. Adaptive: for `veclen > 16` the leaf size stays 1, preserving the original behaviour for high-dimensional data where per-point distance cost dominates. The `checks` counter is incremented by `node->count` (not 1) so that the `checks` parameter retains its documented meaning of approximately N individual point examinations regardless of leaf size.
 
 2. **Template dispatch on result-set type.** `searchLevel`, `searchLevelExact`, `getNeighbors`, and `getExactNeighbors` are templated on the result-set type. The compiler can now inline all result-set operations and eliminate virtual dispatch in the hot search loop.
 
@@ -126,34 +126,32 @@ Five accuracy-neutral improvements compound to give 1.5×–2.5× speedup for lo
 ```
 Benchmark                      dim      Original      Improved       Speedup
 ----------------------------------------------------------------------------
-Build index                      2           2.8ms           1.5ms          1.92x  <--
-Build index                      3           2.8ms           1.5ms          1.87x  <--
-Build index                      8           4.0ms           1.7ms          2.43x  <--
-Build index                     32           7.3ms           7.3ms          1.00x
-Build index                    128          14.0ms          13.7ms          1.02x
+Build index                      2           2.7ms           1.5ms          1.80x  <--
+Build index                      3           2.9ms           1.5ms          1.90x  <--
+Build index                      8           4.1ms           1.7ms          2.46x  <--
+Build index                     32           7.5ms           7.5ms          1.00x
+Build index                    128          14.6ms          13.7ms          1.06x
 
-KNN approx  (checks=32)          2           3.0ms           1.9ms          1.59x  <--
-KNN approx  (checks=32)          3           3.9ms           3.0ms          1.31x
-KNN approx  (checks=32)          8           4.9ms           6.0ms          0.81x
-KNN approx  (checks=32)         32           5.7ms           5.7ms          0.98x
-KNN approx  (checks=32)        128           6.6ms           6.7ms          0.98x
+KNN approx  (checks=32)          2           2.9ms           1.6ms          1.77x  <--
+KNN approx  (checks=32)          3           4.0ms           1.9ms          2.13x  <--
+KNN approx  (checks=32)          8           4.8ms           2.1ms          2.29x  <--
+KNN approx  (checks=32)         32           5.6ms           5.7ms          1.00x
+KNN approx  (checks=32)        128           6.9ms           7.4ms          0.93x
 
-KNN exact   (checks=∞)           2           1.9ms           1.7ms          1.12x
-KNN exact   (checks=∞)           3           3.0ms           2.6ms          1.16x
-KNN exact   (checks=∞)           8          18.9ms          12.7ms          1.49x  <--
-KNN exact   (checks=∞)          32         190.5ms         209.3ms          0.91x
-KNN exact   (checks=∞)         128         467.2ms         498.3ms          0.94x
+KNN exact   (checks=∞)           2           1.9ms           1.8ms          1.09x
+KNN exact   (checks=∞)           3           3.2ms           2.7ms          1.17x
+KNN exact   (checks=∞)           8          18.5ms          12.4ms          1.49x  <--
+KNN exact   (checks=∞)          32         189.4ms         211.7ms          0.89x
+KNN exact   (checks=∞)         128         476.1ms         494.2ms          0.96x
 
-Radius approx                    2           2.4ms           1.5ms          1.57x  <--
-Radius approx                    3           0.8ms           0.6ms          1.34x
+Radius approx                    2           2.5ms           1.3ms          1.89x  <--
+Radius approx                    3           0.9ms           0.6ms          1.42x  <--
 Radius approx                    8           0.5ms           0.5ms          0.98x
-Radius approx                   32           0.7ms           0.8ms          0.91x
-Radius approx                  128           2.1ms           2.4ms          0.89x
+Radius approx                   32           0.7ms           0.8ms          0.92x
+Radius approx                  128           2.2ms           2.3ms          0.94x
 ```
 
 **Regressions at high dimension** (dim ≥ 32, exact search) are expected and understood: the correctness fix visits strictly more nodes than the buggy code (because it no longer over-prunes), so exact search at high dimension is slightly slower. This is the correct trade-off — the old "speed" was achieved by silently skipping valid results. For approximate search the effect is neutral at all dimensions.
-
-**Regression at dim=8, approx KNN** (0.81×) is under investigation and may be a noise artefact or a leaf-size boundary effect at the `veclen ≤ 16` threshold.
 
 ---
 
