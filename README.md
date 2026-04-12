@@ -1,6 +1,6 @@
 # FLANN KDTree — correctness fix and performance improvements
 
-Standalone reproducible benchmark for OpenCV PR [#28792](https://github.com/opencv/opencv/pull/28792).
+Standalone reproducible benchmark for OpenCV PR [#28795](https://github.com/opencv/opencv/pull/28795).
 
 The PR proposes two categories of changes to `KDTreeIndex` in OpenCV's FLANN module:
 
@@ -157,4 +157,4 @@ Radius approx                  128           2.2ms           2.3ms          0.94
 
 ## Author
 
-Rafael Muñoz Salinas — OpenCV PR [#28792](https://github.com/opencv/opencv/pull/28792)
+Rafael Muñoz Salinas — OpenCV PR [#28795](https://github.com/opencv/opencv/pull/28795)
