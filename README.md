@@ -5,7 +5,7 @@ Standalone reproducible benchmark for OpenCV PR [#28792](https://github.com/open
 The PR proposes two categories of changes to `KDTreeIndex` in OpenCV's FLANN module:
 
 1. **A correctness bug fix** — `searchLevelExact` (the code path for exact nearest-neighbour search) silently returns wrong results in stock OpenCV.
-2. **Five performance improvements** — 1.5×–2.5× faster build and search for low-dimensional data (2D, 3D, 8D), which is the dominant use case: 3D point clouds, stereo feature matching, colour histograms.
+2. **Six performance improvements** — 1.8×–2.5× faster build and search for low-dimensional data (2D, 3D, 8D), which is the dominant use case: 3D point clouds, stereo feature matching, colour histograms.
 
 This repo lets anyone verify both claims against their own OpenCV installation, without building a patched OpenCV from source.
 
@@ -109,7 +109,7 @@ Improved: PERFECT accuracy across all test cases.
 
 ### Performance
 
-Five accuracy-neutral improvements compound to give 1.5×–2.5× speedup for low-dimensional data:
+Six accuracy-neutral improvements compound to give 1.8×–2.5× speedup for low-dimensional data:
 
 1. **Multi-point leaf nodes.** Stop splitting at `LEAF_MAX_SIZE = 10` points instead of 1. Reduces tree depth by ~log₂(10) ≈ 3.3 levels, proportionally shrinking the search path. Adaptive: for `veclen > 16` the leaf size stays 1, preserving the original behaviour for high-dimensional data where per-point distance cost dominates. The `checks` counter is incremented by `node->count` (not 1) so that the `checks` parameter retains its documented meaning of approximately N individual point examinations regardless of leaf size.
 
