@@ -562,7 +562,7 @@ private:
             if (!explore_all_trees && (checkCount >= maxCheck) && result_set.full()) {
                 return;
             }
-            checkCount++;
+            checkCount += node->count;
             for (int i = 0; i < node->count; ++i) {
                 int index = node->indices[i];
                 if (checked.test(index)) continue;
