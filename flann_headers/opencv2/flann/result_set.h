@@ -325,37 +325,38 @@ public:
      */
     virtual void clear() = 0;
 
-    /** Copy the set to two C arrays (results are in heap order, not sorted by distance)
+    /** Copy the set to two C arrays
      * @param indices pointer to a C array of indices
      * @param dist pointer to a C array of distances
      * @param n_neighbors the number of neighbors to copy
      */
     virtual void copy(int* indices, DistanceType* dist, int n_neighbors = -1) const
     {
-        int n = (n_neighbors < 0) ? (int)dist_indices_.size()
-                                  : std::min(n_neighbors, (int)dist_indices_.size());
-        for (int i = 0; i < n; ++i) {
-            indices[i] = dist_indices_[i].index_;
-            dist[i]    = dist_indices_[i].dist_;
+        if (n_neighbors < 0) {
+            for (typename std::set<DistIndex>::const_iterator dist_index = dist_indices_.begin(), dist_index_end =
+                     dist_indices_.end(); dist_index != dist_index_end; ++dist_index, ++indices, ++dist) {
+                *indices = dist_index->index_;
+                *dist = dist_index->dist_;
+            }
+        }
+        else {
+            int i = 0;
+            for (typename std::set<DistIndex>::const_iterator dist_index = dist_indices_.begin(), dist_index_end =
+                     dist_indices_.end(); (dist_index != dist_index_end) && (i < n_neighbors); ++dist_index, ++indices, ++dist, ++i) {
+                *indices = dist_index->index_;
+                *dist = dist_index->dist_;
+            }
         }
     }
 
-    /** Copy the set to two C arrays sorted by ascending distance
+    /** Copy the set to two C arrays but sort it according to the distance first
      * @param indices pointer to a C array of indices
      * @param dist pointer to a C array of distances
      * @param n_neighbors the number of neighbors to copy
      */
     virtual void sortAndCopy(int* indices, DistanceType* dist, int n_neighbors = -1) const
     {
-        // Sort a local copy (dist_indices_ is a heap, not sorted)
-        std::vector<DistIndex> sorted(dist_indices_);
-        std::sort(sorted.begin(), sorted.end());
-        int n = (n_neighbors < 0) ? (int)sorted.size()
-                                  : std::min(n_neighbors, (int)sorted.size());
-        for (int i = 0; i < n; ++i) {
-            indices[i] = sorted[i].index_;
-            dist[i]    = sorted[i].dist_;
-        }
+        copy(indices, dist, n_neighbors);
     }
 
     /** The number of neighbors in the set
@@ -379,9 +380,8 @@ protected:
     /** The worst distance found so far */
     DistanceType worst_distance_;
 
-    /** The best candidates so far, stored as a max-heap (largest distance at index 0).
-     *  RadiusUniqueResultSet uses it as an unordered vector. */
-    std::vector<DistIndex> dist_indices_;
+    /** The best candidates so far */
+    std::set<DistIndex> dist_indices_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -402,34 +402,25 @@ public:
         this->clear();
     }
 
-    /** Add a possible candidate to the best neighbors.
-     *  dist_indices_ is maintained as a max-heap so the worst neighbor
-     *  (largest distance) is always at index 0 and can be evicted in O(log k).
+    /** Add a possible candidate to the best neighbors
      * @param dist distance for that neighbor
      * @param index index of that neighbor
      */
     inline void addPoint(DistanceType dist, int index) CV_OVERRIDE
     {
+        // Don't do anything if we are worse than the worst
         if (dist >= worst_distance_) return;
+        dist_indices_.insert(DistIndex(dist, index));
 
         if (is_full_) {
-            // Evict the current worst and insert the new point
-            std::pop_heap(dist_indices_.begin(), dist_indices_.end());
-            dist_indices_.back() = DistIndex(dist, index);
-            std::push_heap(dist_indices_.begin(), dist_indices_.end());
-            // Tighten the pruning radius: heap root is the new worst
-            worst_distance_ = dist_indices_[0].dist_;
-        }
-        else {
-            dist_indices_.push_back(DistIndex(dist, index));
-            std::push_heap(dist_indices_.begin(), dist_indices_.end());
-            if (dist_indices_.size() == (size_t)capacity_) {
-                is_full_ = true;
-                // Now full: start pruning branches farther than the worst neighbor
-                worst_distance_ = dist_indices_[0].dist_;
+            if (dist_indices_.size() > capacity_) {
+                dist_indices_.erase(*dist_indices_.rbegin());
+                worst_distance_ = dist_indices_.rbegin()->dist_;
             }
-            // While not yet full keep worst_distance_ at max so all candidates
-            // are accepted until k slots are taken.
+        }
+        else if (dist_indices_.size() == capacity_) {
+            is_full_ = true;
+            worst_distance_ = dist_indices_.rbegin()->dist_;
         }
     }
 
@@ -438,7 +429,6 @@ public:
     void clear() CV_OVERRIDE
     {
         dist_indices_.clear();
-        dist_indices_.reserve(capacity_);
         worst_distance_ = std::numeric_limits<DistanceType>::max();
         is_full_ = false;
     }
@@ -477,7 +467,7 @@ public:
      */
     void addPoint(DistanceType dist, int index) CV_OVERRIDE
     {
-        if (dist <= radius_) dist_indices_.push_back(DistIndex(dist, index));
+        if (dist <= radius_) dist_indices_.insert(DistIndex(dist, index));
     }
 
     /** Remove all elements in the set

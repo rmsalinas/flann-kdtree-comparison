@@ -65,6 +65,68 @@ target_include_directories(accuracy_improved PRIVATE ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(accuracy_improved PRIVATE ${OpenCV_LIBS})
 target_compile_options(accuracy_improved PRIVATE ${BENCH_FLAGS})
 
+# ── my_custom_tests ──────────────────────────────────────────────────────────
+add_executable(my_custom_tests src/my_custom_tests.cpp)
+target_include_directories(my_custom_tests
+    BEFORE PRIVATE
+        ${CMAKE_SOURCE_DIR}/flann_headers
+        ${FLANN_HEADERS_DIR}
+)
+target_include_directories(my_custom_tests PRIVATE ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(my_custom_tests PRIVATE ${OpenCV_LIBS})
+target_compile_options(my_custom_tests PRIVATE ${BENCH_FLAGS})
+
+# ── reproduce_bug_original ───────────────────────────────────────────────────
+add_executable(reproduce_bug_original src/reproduce_bug.cpp)
+target_include_directories(reproduce_bug_original PRIVATE ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(reproduce_bug_original PRIVATE ${OpenCV_LIBS})
+target_compile_options(reproduce_bug_original PRIVATE ${BENCH_FLAGS})
+
+# ── reproduce_bug_improved ───────────────────────────────────────────────────
+add_executable(reproduce_bug_improved src/reproduce_bug.cpp)
+target_include_directories(reproduce_bug_improved
+    BEFORE PRIVATE
+        ${CMAKE_SOURCE_DIR}/flann_headers
+        ${FLANN_HEADERS_DIR}
+)
+target_include_directories(reproduce_bug_improved PRIVATE ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(reproduce_bug_improved PRIVATE ${OpenCV_LIBS})
+target_compile_options(reproduce_bug_improved PRIVATE ${BENCH_FLAGS})
+
+# ── bench_kmeans_original ────────────────────────────────────────────────────
+add_executable(bench_kmeans_original src/benchmark_kmeans.cpp)
+target_include_directories(bench_kmeans_original PRIVATE ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(bench_kmeans_original PRIVATE ${OpenCV_LIBS})
+target_compile_options(bench_kmeans_original PRIVATE ${BENCH_FLAGS})
+
+# ── bench_kmeans_improved ─────────────────────────────────────────────────────
+add_executable(bench_kmeans_improved src/benchmark_kmeans.cpp)
+target_include_directories(bench_kmeans_improved
+    BEFORE PRIVATE
+        ${CMAKE_SOURCE_DIR}/flann_headers
+        ${FLANN_HEADERS_DIR}
+)
+target_include_directories(bench_kmeans_improved PRIVATE ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(bench_kmeans_improved PRIVATE ${OpenCV_LIBS})
+target_compile_options(bench_kmeans_improved PRIVATE ${BENCH_FLAGS})
+
+# ── exhaustive_test_original ─────────────────────────────────────────────────
+add_executable(exhaustive_test_original src/exhaustive_test.cpp)
+target_include_directories(exhaustive_test_original PRIVATE ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(exhaustive_test_original PRIVATE ${OpenCV_LIBS})
+target_compile_options(exhaustive_test_original PRIVATE ${BENCH_FLAGS})
+
+# ── exhaustive_test_improved ──────────────────────────────────────────────────
+add_executable(exhaustive_test_improved src/exhaustive_test.cpp)
+target_include_directories(exhaustive_test_improved
+    BEFORE PRIVATE
+        ${CMAKE_SOURCE_DIR}/flann_headers
+        ${FLANN_HEADERS_DIR}
+)
+target_include_directories(exhaustive_test_improved PRIVATE ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(exhaustive_test_improved PRIVATE ${OpenCV_LIBS})
+target_compile_options(exhaustive_test_improved PRIVATE ${BENCH_FLAGS})
+
 message(STATUS "OpenCV version : ${OpenCV_VERSION}")
 message(STATUS "OpenCV include : ${OpenCV_INCLUDE_DIRS}")
 message(STATUS "Build type     : ${CMAKE_BUILD_TYPE}")

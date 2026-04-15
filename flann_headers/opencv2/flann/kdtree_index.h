@@ -556,17 +556,17 @@ private:
 
         /* If this is a leaf node, then do check and return. */
         if ((node->child1 == NULL)&&(node->child2 == NULL)) {
-            /* Accumulate checkCount by leaf size so that maxChecks retains its
-             * original meaning (approximately N individual point examinations),
-             * regardless of how many points are stored per leaf. */
             if (!explore_all_trees && (checkCount >= maxCheck) && result_set.full()) {
                 return;
             }
-            checkCount += node->count;
+            /* Only count genuinely new points toward the budget.  In multi-tree
+             * searches the same point can be reached via different trees; counting
+             * duplicates inflates checkCount and exhausts maxChecks prematurely. */
             for (int i = 0; i < node->count; ++i) {
                 int index = node->indices[i];
                 if (checked.test(index)) continue;
                 checked.set(index);
+                checkCount++;
                 DistanceType dist = distance_(dataset_[index], vec, veclen_);
                 result_set.addPoint(dist, index);
             }
